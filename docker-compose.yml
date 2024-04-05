@@ -1,0 +1,60 @@
+version: '3.8'
+services:
+  php:
+    container_name: php-laravel-local
+    build:
+      context: php
+      dockerfile: Dockerfile
+    volumes:
+      - './../laravel_local:/var/www/html'
+    depends_on:
+        - mysql
+    environment:
+      XDEBUG_CONFIG: remote_host=host.docker.internal
+      PHP_IDE_CONFIG: "serverName=docker"
+    networks:
+      - laravel_local_network
+
+  nginx:
+    container_name: nginx-laravel-local
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    volumes:
+      - './../laravel_local:/var/www/html'
+    ports:
+      - "80:80"
+    links:
+      - php
+    depends_on:
+      - php
+    networks:
+      - laravel_local_network
+
+  mysql:
+    container_name: mysql-laravel-local
+    platform: linux/x86_64
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=laravel_local
+    networks:
+      - laravel_local_network
+
+  elasticsearch:
+    container_name: elasticsearch-laravel-local
+    build:
+      context: elasticsearch
+      dockerfile: Dockerfile
+    environment:
+      - discovery.type=single-node
+    networks:
+      - laravel_local_network
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+networks:
+  laravel_local_network:
